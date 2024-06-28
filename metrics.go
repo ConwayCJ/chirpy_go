@@ -17,6 +17,12 @@ func (cfg *apiConfig) srvMetrics(w http.ResponseWriter, r *http.Request) {
 	</html>`, cfg.fileserverHits)))
 }
 
+func (cfg *apiConfig) srvResetCount(w http.ResponseWriter, r *http.Request) {
+	cfg.fileserverHits = 0
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(http.StatusText(http.StatusOK)))
+}
+
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg.fileserverHits++
