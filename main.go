@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type apiConfig struct {
@@ -41,7 +44,41 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", cfg.postNewChirp)
 	// users
 	mux.HandleFunc("POST /api/users", cfg.postNewUser)
-
+	mux.HandleFunc("/api/login", cfg.handleLogin)
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())
+}
+
+func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	dbStruct, err := cfg.db.loadDB()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to load db")
+		return
+	}
+
+	var usr parameters
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&usr)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "issue decoding json")
+		return
+	}
+
+	dbUsr, exists := findExistingUser(dbStruct, usr.Email)
+	if !exists {
+		respondWithError(w, http.StatusNotFound, "invalid email address")
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(dbUsr.Password), []byte(usr.Password))
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "incorrect password")
+		return
+	}
+
+	respondWithJSON(w, 200, dbUsr)
 }

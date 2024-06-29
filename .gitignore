@@ -1,2 +1,5 @@
+# Ignore db file
+database.json
+
+# Ignore server output
 out
-*.go

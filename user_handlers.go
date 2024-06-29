@@ -31,6 +31,7 @@ func (cfg *apiConfig) postNewUser(w http.ResponseWriter, r *http.Request) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to encrypt password")
+		return
 	}
 	/*------------------*/
 	email, password := params.Email, string(hash)
@@ -38,6 +39,7 @@ func (cfg *apiConfig) postNewUser(w http.ResponseWriter, r *http.Request) {
 	newUser, err := cfg.db.CreateUser(email, password)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "issue creating user, try again later")
+		return
 	}
 
 	respondWithJSON(w, http.StatusCreated, User{
