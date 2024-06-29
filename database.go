@@ -146,10 +146,26 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	return chirp, nil
 }
 
+func findExistingUser(db DBStructure, email string) (User, bool) {
+	users := db.Users
+
+	for _, user := range users {
+		if user.Email == email {
+			return user, true
+		}
+	}
+
+	return User{}, false
+}
+
 func (db *DB) CreateUser(email, password string) (User, error) {
 	dbstruct, err := db.loadDB()
 	if err != nil {
 		return User{}, err
+	}
+
+	if _, ok := findExistingUser(dbstruct, email); ok {
+		return User{}, errors.New("email already exists")
 	}
 
 	id := len(dbstruct.Users) + 1
